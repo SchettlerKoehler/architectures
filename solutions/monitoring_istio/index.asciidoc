@@ -34,7 +34,12 @@ We used the following tools to solve the problem:
 
 //Instruction and goals
 == Introduction
-Assumed is a Kubernetes cluster with Istio installed and running microservices. We will continuously show how you can monitor your cluster with the microservices using Prometheus and Grafana and how you can split the tasks into different namespaces. 
+
+Assumed is a Kubernetes cluster with Istio installed and running microservices. We will continuously show how you can monitor your cluster with the microservices using Prometheus and Grafana and how you can split the tasks into different namespaces.
+
+// This image fits best here because we cover details later
+
+image::monitoring-namespaces.png[Namespaces Architecture, width=100%, height=100%]
 
 == Prerequisites 
 * basic Docker runs on your environment https://docs.docker.com/get-docker/[(docker install)]
@@ -63,6 +68,9 @@ In detail we want the following:
 * run standard microservices in the application namespace
 * intercept the metrics created by Istio and process them by our monitoring namespace
 
+// This image fits here because as a reader your should have and Idea now what istio and kubernetes is -> Monitoring will be covered later
+// TODO add description to arrows
+
 image::monitoring-architecture-simple.png[Namespaces Architecture Simple, width=100%, height=100%]
 
 === What is possible in the future?
@@ -76,11 +84,24 @@ For a detailed overview: read the https://kubernetes.io/docs/concepts/overview/w
 We would like to walk you through our decision making, why we think that you should use Prometheus and Grafana for your monitoring. 
 
 //Solution Strategy
+
+// TODO - rework solution strategy so that it visualizes final solution
+// Explain what prometheus, grafana and kiali do
 == Solution Strategy
 The setup of the namespace *istio-system* is indirectly already done, because Istio is already installed on our system and therefore the namespace is created automatically. The next namespace where we don't have to care much is the *Application* namespace, there we only have to add all our microservices which run in our cluster.
 
-image::monitoring-namespaces.png[Namespaces Architecture, width=100%, height=100%]
+// TODO remove the yaml code from this image - we don't cover implementation yet
+// TODO add description to arrows
+
+image::monitoring-architecture.png[Monitoring Configuration, width=100%, height=100%]
  
+//Constraints and Alternatives
+//TODO
+
+
+
+== How to implement our solution
+
 === Create Namespaces [[creating_namespaces]]
 
 * Aplicaiton
@@ -93,7 +114,7 @@ image::monitoring-namespaces.png[Namespaces Architecture, width=100%, height=100
   kubectl label namespace monitoring istio-injection=enabled
 ```
 
-== Expose your jobs and microservices to the monitoring namespace
+=== Expose your jobs and microservices to the monitoring namespace
 
 We are defining targets for each of our jobs, which are scraped through the Kubernetes API server. Where
 
@@ -110,8 +131,12 @@ We are defining targets for each of our jobs, which are scraped through the Kube
         action: keep
         regex: istio-telemetry;prometheus
 ```
-image::monitoring-architecture-prometheus-endpoints.png[Namespaces Architecture - Prometheus endpoints, width=100%, height=100%]
-== Deploy Prometheus and Grafana in your monitoring namespace
+// This image adds yaml code to the image before
+// TODO add description to arrows
+
+image::monitoring-architecture.png[Monitoring Configuration, width=100%, height=100%]
+
+=== Deploy Prometheus and Grafana in your monitoring namespace
 
 The namespace with the *Monitoring* will be a bit more complex, because we have to adjust the config files of Prometheus and Grafana. We have oriented ourselves as it can be seen in this https://istiobyexample.dev/prometheus/[example] +
  *(1) Grafana Monitoring Namespace* - Part 1
@@ -327,14 +352,7 @@ Istio ultimately for all the communication and for generating the metrics that w
 Grafana and Prometheus to collect and process the metrics collected by istio https://grafana.com/docs/[(more about Grafana)] and https://prometheus.io/docs/introduction/overview/[(more about Prometheus)].
 
 // This image may fit better somewhere else
-image::monitoring-architecture.png[Monitoring Configuration, width=100%, height=100%]
 
-//Constraints and Alternatives
-//TODO
-
-
-
-== How to implement our solution
 
 You need to tell Kiali where to listen for Prometheus: The url consists of service.namespace:PORT
 ```YAML
