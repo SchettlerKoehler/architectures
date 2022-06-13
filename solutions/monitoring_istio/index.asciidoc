@@ -14,6 +14,10 @@ To get an understanding of what Istio is and why you should use it regardless of
 
 For most of your monitoring questions you might want to read the https://istio.io/latest/docs/concepts/observability/["Observability"] section from the official Istio https://istio.io/latest/docs/[documentation]. 
 
+== Why should we use Istio?
+
+Istio makes traffic management transparent to the application, moving this functionality out of the application and into the platform layer as a cloud native infrastructure. Istio complements Kubernetes, by enhancing its traffic management, observability and security for cloud native applications. On top Istio has much more functions like: secure, connect, and monitor microservices. We will mainly only highlight the monitoring here.
+
 //Abstract
 == Core elements of the problem and its solution
 
@@ -86,8 +90,8 @@ We would like to walk you through our decision making, why we think that you sho
 //Solution Strategy
 
 // TODO - rework solution strategy so that it visualizes final solution
-// Explain what prometheus, grafana and kiali do
 == Solution Strategy
+Prometheus is used to intercept and store metrics. In contrast, Grafana uses these metrics to display them visually. https://istio.io/latest/docs/ops/integrations/kiali/[Kiali] displays the structure and state of our Istio cluster. It should be noted that kiali requires Prometheus to create topology structures, calculate health and more.
 The setup of the namespace *istio-system* is indirectly already done, because Istio is already installed on our system and therefore the namespace is created automatically. The next namespace where we don't have to care much is the *Application* namespace, there we only have to add all our microservices which run in our cluster.
 
 // TODO remove the yaml code from this image - we don't cover implementation yet
@@ -351,8 +355,6 @@ Kubernetes to integrate the microservices into our cluster https://kubernetes.io
 Istio ultimately for all the communication and for generating the metrics that we want to evaluate for monitoring https://istio.io/latest/docs/[(more about Istio)]. +
 Grafana and Prometheus to collect and process the metrics collected by istio https://grafana.com/docs/[(more about Grafana)] and https://prometheus.io/docs/introduction/overview/[(more about Prometheus)].
 
-// This image may fit better somewhere else
-
 
 You need to tell Kiali where to listen for Prometheus: The url consists of service.namespace:PORT
 ```YAML
@@ -400,6 +402,9 @@ Now our cluster should already have our microservices running under the applicat
 
 *This way we now have our tasks divided into the different namespaces and can still use each service as usual.*
 
+
+== Conclusion
+For our purpose, the solution has worked optimally. However, each individual must see whether the solution is applicable to the individual project. Before you implement the changes to your project, make sure it is what you need for your project. Finally, you should now have a kubernetes cluster with three different namespaces: Application, Istio and Monitoring. Where the microservices run on Application, the Istio-System on Istio and our monitoring tools on Monitoring. Nevertheless it should be possible to evaluate the metrics of the microservices via our monitoring tools.
 
 
 
