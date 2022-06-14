@@ -117,6 +117,7 @@ image::monitoring-architecture.png[Monitoring Configuration, width=100%, height=
 ```Kubernetes
   kubectl label namespace monitoring istio-injection=enabled
 ```
+*Code explanation:* _Create namespaces application/monitoring and enable Istio on namespace_
 
 === Expose your jobs and microservices to the monitoring namespace
 
@@ -135,6 +136,7 @@ We are defining targets for each of our jobs, which are scraped through the Kube
         action: keep
         regex: istio-telemetry;prometheus
 ```
+*Code explanation:* _Defining targets for our job_
 // This image adds yaml code to the image before
 // TODO add description to arrows
 
@@ -240,6 +242,7 @@ metadata:
 
 ---
 ``` 
+*Code explanation:* _Change config from Grafana to tell on which namespace(monitoring) it should running_
 
 See xref:Files/grafana.yaml[Grafana] for full example + 
  
@@ -339,6 +342,9 @@ metadata:
   name: prometheus
   namespace: monitoring
 ``` 
+
+*Code explanation:* _Change config from Prometheus to tell on which namespace(monitoring) it should running_
+
 See xref:Files/prometheus/deployment.yml[Prometheus] for full example
 
 //TODO: Images
@@ -367,6 +373,9 @@ You need to tell Kiali where to listen for Prometheus: The url consists of servi
       prometheus:
         url: "http://prometheus.monitoring:9090/"
 ```
+*Code explanation:* _Change config from Kiali to tell on which port Prometheus is running_
+
+
 //Concrete Steps to create the solution
 
 // Not finished yet
@@ -382,29 +391,45 @@ Create Namespace(*directly with istio enabled*):
 ---
 kubectl label namespace  application istio-injection=enabled
 ``` 
+*Code explanation:* _Creates namespace(Application) with Istio enabled on namespace_
+
 
 Add microservice retroactively to our application namespace:
 ```KUBERNETES
 ---
- kubectl apply -f MICROSERVICE.yaml -n application `
+ kubectl apply -f MICROSERVICE.yaml -n application 
+```
+*Code explanation:* _Add microservice to our created namespace(Application)_
+
+
+Now you can install Istio on your cluster. You only have to install Istio in general as described above. Afterwards you can activate Istio on single namespaces as soon as Istio is installed on the cluster. To enable Istio on our application namespace we are done, because the namespace created as described above already enabled it. 
+
+Now our cluster should already have our microservices running under the application namespace, Istio should be installed and enabled on our namespace and now only the monitoring is missing. For this we focus on Grafana and Prometheus. With the Istio installation Grafana and Prometheus are directly provided (istio\samples\addons). Now it is important not to use the standard config files of the monitoring tools, because they will be installed on the istio namespace and run over it. However we want to run them on our own monitoring namespace. Therefore we have to change the config files (grafana.yaml/prometheus.yaml). To do this you can follow our sample code from above. This shows an example of how to edit the config files to run on the separate monitoring namespace. Once you have customized your config files, you can enable them on your cluster with the simple kubernetes command. 
+
+*Apply Prometheus:*
+```KUBERNETES
+---
+kubectl apply -f prometheus.yaml
 ```
 
-Now you can install Istio on your cluster. You only have to install Istio in general as described above. Afterwards you can activate Istio on single namespaces as soon as Istio is installed on the cluster. To enable Istio on our application namespace we have to do the following(if namespace created as described above, no action needed): [ADD CODE FRAGMENT].
-//istio-sidecar?
+*Apply Grafana:*
+```KUBERNETES
+---
+kubectl apply -f grafana.yaml
+```
 
-Now our cluster should already have our microservices running under the application namespace, Istio should be installed and enabled on our namespace and now only the monitoring is missing. For this we focus on Grafana and Prometheus. With the Istio installation Grafana and Prometheus are directly provided (istio\samples\addons). Now it is important not to use the standard config files of the monitoring tools, because they will be installed on the istio namespace and run over it. However we want to run them on our own monitoring namespace. Therefore we have to change the config files (grafana.yaml/prometheus.yaml). To do this you can follow our sample code from above. This shows an example of how to edit the config files to run on the separate monitoring namespace. Once you have customized your config files, you can enable them on your cluster with the simple kubernetes command: [ADD CODE FRAGMENT]. 
-
-//Option 1
-// kubectl apply -f GRAFANA/PROMETHEUS.yaml
-
-//Option 2
-// kubectl apply -f GRAFANA/PROMETHEUS.yaml -n monitoring
+*Apply Kiali:*
+```KUBERNETES
+---
+kubectl apply -f kiali.yaml
+```
+*Code explanation:* _Applies our new config files to the cluster_
 
 *This way we now have our tasks divided into the different namespaces and can still use each service as usual.*
 
 
 == Conclusion
-For our purpose, the solution has worked optimally. However, each individual must see whether the solution is applicable to the individual project. Before you implement the changes to your project, make sure it is what you need for your project. Finally, you should now have a kubernetes cluster with three different namespaces: Application, Istio and Monitoring. Where the microservices run on Application, the Istio-System on Istio and our monitoring tools on Monitoring. Nevertheless it should be possible to evaluate the metrics of the microservices via our monitoring tools.
+For our purpose, the solution has worked optimally. However, each individual must see whether the solution is applicable to the individual project. Before you implement the changes to your project, make sure it is what you need for your project. If you think Istio is not right for your project, maybe take a closer look at https://linkerd.io/2.11/overview/[linkerd]. Finally, you should now have a kubernetes cluster with three different namespaces: Application, Istio and Monitoring. Where the microservices run on Application, the Istio-System on Istio and our monitoring tools on Monitoring. Nevertheless it should be possible to evaluate the metrics of the microservices via our monitoring tools.
 
 
 
