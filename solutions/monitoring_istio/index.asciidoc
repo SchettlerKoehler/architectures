@@ -36,7 +36,6 @@ We used the following tools to solve the problem:
 * Prometheus
 * Kiali
 
-//Instruction and goals
 == Introduction
 
 Assumed is a Kubernetes cluster with Istio installed and running microservices. We will continuously show how you can monitor your cluster with the microservices using Prometheus and Grafana and how you can split the tasks into different namespaces.
@@ -83,11 +82,10 @@ Since this solution is tailored towards an existing application you may have gat
 === Why monitoring in its own namespace?
 For a detailed overview: read the https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/[explanation] of namespaces.
 
-//Context and Scope
 == Context and Scope
-We would like to walk you through our decision making, why we think that you should use Prometheus and Grafana for your monitoring. 
+*We would like to walk you through our decision making, why we think that you should use Prometheus and Grafana for your monitoring.* We use Prometheus to intercept the metrics created by Istio. This data is then passed on to Grafana to visualize the data e.g. with graphs. On top Prometheus provides a powerful querying language.Grafana and Prometheus are both compatible with most data source types. 
+*Further we would like to explain why we also recommend to use Istio.* Istio is in charge of connect, secure, control, and observe services, but in our solution we only focus on the "connect" feature. 
 
-//Solution Strategy
 
 // TODO - rework solution strategy so that it visualizes final solution
 == Solution Strategy
@@ -429,7 +427,7 @@ kubectl apply -f kiali.yaml
 
 
 == Conclusion
-For our purpose, the solution has worked optimally. However, each individual must see whether the solution is applicable to the individual project. Before you implement the changes to your project, make sure it is what you need for your project. If you think Istio is not right for your project, maybe take a closer look at https://linkerd.io/2.11/overview/[linkerd]. Finally, you should now have a kubernetes cluster with three different namespaces: Application, Istio and Monitoring. Where the microservices run on Application, the Istio-System on Istio and our monitoring tools on Monitoring. Nevertheless it should be possible to evaluate the metrics of the microservices via our monitoring tools.
+For our purpose, the solution has worked optimally. However, everyone must see whether the solution is applicable to the individual project. Before you implement the changes to your project, make sure it is what you need for your project. If you think Istio is not right for your project, maybe take a closer look at https://linkerd.io/2.11/overview/[linkerd]. In this solution you created three namespaces. On every namespace you enabled istio. For your monitoring tools you edit the config for your personal use. In our example we changed the namespace to our monitoring namespace. As well you configured the gateway for access and set up Kiali to work with it. Every code we provided is just sample code and could deviate to your use of code. Finally, you should now have a kubernetes cluster with three different namespaces: Application, Istio and Monitoring. Where the microservices run on Application, the Istio-System on Istio and our monitoring tools on Monitoring. Nevertheless it should be possible to evaluate the metrics of the microservices via our monitoring tools.
 
 
 
