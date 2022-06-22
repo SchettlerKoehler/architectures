@@ -18,7 +18,7 @@ For most of your monitoring questions you might want to read the https://istio.i
 
 == Why should you use Istio?
 
-Istio makes traffic management transparent to the application, moving this functionality out of the application and into the platform layer as a cloud native infrastructure. Istio complements Kubernetes, by enhancing its traffic management, observability and security for cloud native applications. On top Istio has much more functions like: secure, connect, and monitor microservices. We will mainly only highlight the monitoring here.
+Istio makes traffic management transparent to the application, moving this functionality out of the application and into the platform layer as a cloud native infrastructure. Istio complements Kubernetes, by enhancing its traffic management, observability and security for cloud native applications. On top Istio has much more functions like: secure, connect, and monitor microservices. We will mainly only highlight the monitoring here. Istio was developed at the time specifically for the Kubernetes cluster environment, among other things. Istio should solve the problem of overcoming the loss of observability and communication and interaction control that occurs with a larger number of microservices. Istio acts as an infrastructure layer between the application service and the network to provide a unified (non-language specific) way to control microservices. Theoretically, istio still has many functions: Automatic load balancing, fine-grained traffic control, access control, visibility but we have only covered a fraction of them in this solution. However, this can be seen as a chance to get more out of the tool when istio is already running in the cluster.
 
 //Abstract
 == Core elements of the problem and its solution
@@ -418,7 +418,13 @@ kubectl apply -f kiali.yaml
 
 
 == Conclusion
-For our purpose, the solution has worked optimally. However, everyone must see whether the solution is applicable to the individual project. Before you implement the changes to your project, make sure it is what you need for your project. If you think Istio is not right for your project, maybe take a closer look at https://linkerd.io/2.11/overview/[linkerd]. In this solution you created three namespaces. On every namespace you enabled istio. For your monitoring tools you edit the config for your personal use. In our example we changed the namespace to our monitoring namespace. As well you configured the gateway for access and set up Kiali to work with it. Every code we provided is just sample code and could deviate to your use of code. Finally, you should now have a kubernetes cluster with three different namespaces: Application, Istio and Monitoring. Where the microservices run on Application, the Istio-System on Istio and our monitoring tools on Monitoring. Nevertheless it should be possible to evaluate the metrics of the microservices via our monitoring tools.
+For our purpose, the solution has worked optimally. However, everyone must see whether the solution is applicable to the individual project. Before you implement the changes to your project, make sure it is what you need for your project. Istio is obviously a main component of this solution. If you think Istio is not right for your project, maybe take a closer look at https://linkerd.io/2.11/overview/[linkerd]. An immediate difference between the two is the proxy technology used in the data plane. While Istio uses Envoy as a proxy, Linkerd uses a special proxy called Linkerd-Proxy. Another important difference is that the Linkerd service mesh is created with a Kubernetes mindset, while Istio is suitable for both Kubernetes and non-Kubernetes environments. Therefore, Linkerd can only be run in Kubernetes environments. 
+
+In this solution you created three namespaces. On every namespace you enabled istio. For your monitoring tools you edit the config for your personal use. In our example we changed the namespace to our monitoring namespace. As well you configured the gateway for access and set up Kiali to work with it. Every code we provided is just sample code and could deviate to your use of code. 
+
+Finally, you should now have a kubernetes cluster with three different namespaces: Application, Istio and Monitoring. Istio is platform-independent. This facilitates collaboration with the Kubernetes engine. By using the two functions together, service-to-service and pod-to-pod communication can be secured at the application and network level. Where the microservices run on Application, the Istio-System on Istio and our monitoring tools on Monitoring. Nevertheless it should be possible to evaluate the metrics of the microservices via our monitoring tools.
+
+
 
 
 
