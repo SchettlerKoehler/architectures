@@ -79,6 +79,15 @@ For a detailed overview: read the https://kubernetes.io/docs/concepts/overview/w
 We use https://grafana.com/[Prometheus] to intercept the metrics created by Istio. This data is then passed to https://grafana.com/[Grafana] to visualize the data e.g. with graphs. On top Prometheus provides a powerful querying language. Grafana and Prometheus are both compatible with most data source types. Additionally we recommend you to add https://istio.io/latest/docs/ops/integrations/kiali/[Kiali] to your architecture. +
 *Further we would like to explain why we also recommend to use Istio.* Istio is in charge of connecting, securing, controlling, and observing the microservices in your cluster, but in our solution we only focus on the "connecting" feature. How would you document your architecture? Writing a documentaion can be a very difficult and confusing task, as microservices and tools show up left and right in a diverse fashion. And how is anyone going to understand your documentaion? Istio basically allows you to reduce the complexity of your architecture, because all you have to say is, it is managed by Istio.
 
+=== The stack
+The tools we used for our local testing were Rancher Desktop, Kubernetes, Istio, Grafana and Prometheus. (instead of Rancher Desktop you can use anything that supports Docker).
+
+- Docker is used to build our Docker Images for the Kubernetes Cluster https://docs.docker.com/[(more about Docker)]. 
+- Rancher Desktop because it ran docker and rancher provides you with a local kubernetes cluster https://docs.rancherdesktop.io/[(more about Rancher Desktop)].
+Kubernetes to integrate the microservices into our cluster https://kubernetes.io/docs/home/[(more about Kubernetes)].
+- Istio ultimately for all the communication and for generating the metrics that we want to evaluate for monitoring https://istio.io/latest/docs/[(more about Istio)].
+- Grafana and Prometheus to collect and process the metrics collected by istio https://grafana.com/docs/[(more about Grafana)] and https://prometheus.io/docs/introduction/overview/[(more about Prometheus)].
+
 == Solution Strategy
 Prometheus is used to intercept and store metrics. In contrast, Grafana is used to visualize the metrics. Kiali displays the structure and state of your Istio cluster. It should be noted that Kiali requires Prometheus to create topological structures, calculate health and more. +
 The setup of the namespace *istio-system* is indirectly already done, because Istio is already installed on our system and therefore the namespace is created automatically. The next namespace where we don't have to care too much about is the *Application* namespace, there we only have to add all our microservices which run in our cluster. +
@@ -96,17 +105,18 @@ Create your namespaces with `istio-injection=enabled` to ensure automatic sideca
 
 * Application
 ```Kubernetes
-  kubectl label namespace application istio-injection=enabled
+$ kubectl label namespace application istio-injection=enabled
 ```
 
 * Monitoring
 ```Kubernetes
-  kubectl label namespace monitoring istio-injection=enabled
+$ kubectl label namespace monitoring istio-injection=enabled
 ```
 
 === Expose your jobs and microservices
 
 We are defining targets for each of our microservices and jobs, which are scraped through the Kubernetes API server. Where `job` is to be replaced by the name of your microservice. You can add all of it to your Prometheus configuration like we did for our local testing. See xref:Files/prometheus/configmap.yaml[configmap.yaml] for full example +
+For a better understanding follow the <<Prometheus_instructions>>.
 
 ```YAML
     - job_name: 'job'
@@ -127,10 +137,11 @@ We are defining targets for each of our microservices and jobs, which are scrape
 image::monitoring-architecture-implementation.png[Monitoring Implementation, width=100%, height=100%] 
 [.small]#Description: Visualization of code implementation inside your architecture#
 
-=== Deploy Prometheus and Grafana
+=== Configuring Prometheus, Grafana and Kiali
 
 The namespace with the *Monitoring* will be a bit more complex, because we have to adjust the config files of Prometheus and Grafana. We have oriented ourselves as it can be seen in this https://istiobyexample.dev/prometheus/[example] +
- *(1) Grafana Monitoring Namespace* 
+
+==== Grafana
  
 Part 1
 
@@ -231,10 +242,8 @@ metadata:
 ``` 
 
 See xref:Files/grafana.yaml[Grafana] for full example + 
- 
-  
 
-*(2) Prometheus Monitoring Namespace*
+==== Prometheus
 
 Part 1
 
@@ -258,9 +267,10 @@ metadata:
     {}
 ---
 ```
+Part 2
 
 - Configure Prometheus according to your needs by using Kubernetes ConfigMaps
-- You will also define the targets for your jobs here [[defining_targets]]
+- You will also define the targets for your jobs here [[Prometheus_instructions]]
 
 ```YAML
 # Source: prometheus/templates/server/cm.yaml
@@ -296,9 +306,26 @@ data:
     # ...
 
 ```
-Part 2
+
+Part 3
+
+- grant Prometheus permission and define rules
 
 ```YAML
+---
+# Source: prometheus/templates/server/clusterrole.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    component: "server"
+    app: prometheus
+    release: prometheus
+    chart: prometheus-15.0.1
+    heritage: Helm
+  name: prometheus
+rules:
+  # ...
 ---
 # Source: prometheus/templates/server/clusterrolebinding.yaml
 apiVersion: rbac.authorization.k8s.io/v1
@@ -319,6 +346,14 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
   name: prometheus
+---
+
+```
+Part 4
+
+- Expose Prometheus as a network service to give each of its pods an IP adress within your cluster
+
+```YAML
 ---
 # Source: prometheus/templates/server/service.yaml
 apiVersion: v1
@@ -345,6 +380,14 @@ spec:
   sessionAffinity: None
   type: "ClusterIP"
 ---
+```
+
+Part 5
+
+- Finally declare the current Prometheus configuration as a desired state
+
+```YAML
+---
 # Source: prometheus/templates/server/deploy.yaml
 apiVersion: apps/v1
 kind: Deployment
@@ -359,19 +402,11 @@ metadata:
   namespace: monitoring
 ``` 
 
-*Code explanation:* _Change config from Prometheus to tell in which namespace(monitoring) it should running in_
-
 See xref:Files/prometheus/deployment.yml[Prometheus] for full example
 
-The tools we used for our local testing were Rancher Desktop, Kubernetes, Istio, Grafana and Prometheus. (instead of Rancher Desktop you can use anything that supports Docker) +
-Docker to build our Docker Images for the Kubernetes Cluster https://docs.docker.com/[(more about Docker)]. + 
-Rancher Desktop because it ran docker and rancher provides you with a local kubernetes cluster https://docs.rancherdesktop.io/[(more about Rancher Desktop)]. +
-Kubernetes to integrate the microservices into our cluster https://kubernetes.io/docs/home/[(more about Kubernetes)]. +
-Istio ultimately for all the communication and for generating the metrics that we want to evaluate for monitoring https://istio.io/latest/docs/[(more about Istio)]. +
-Grafana and Prometheus to collect and process the metrics collected by istio https://grafana.com/docs/[(more about Grafana)] and https://prometheus.io/docs/introduction/overview/[(more about Prometheus)].
+==== Kiali
 
-
-You need to tell Kiali where to listen for Prometheus: The url consists of service.namespace:PORT
+- You need to tell Kiali where to listen for Prometheus: The url consists of service.namespace:PORT
 ```YAML
 ---
  external_services:
@@ -382,31 +417,21 @@ You need to tell Kiali where to listen for Prometheus: The url consists of servi
       prometheus:
         url: "http://prometheus.monitoring:9090/"
 ```
-*Code explanation:* _Change config from Kiali to tell on which port Prometheus is running_
 
-
-//Concrete Steps to create the solution
+=== Apply your configurations
 
 // Not finished yet
 First of all, you need the prerequisites as described above. Then it makes sense to start and set up Docker. Now you can build the images for your microservices. After that you can add your microservices directly to the cluster.
 
-=== If you also use Rancher desktop pay attention to the following things:
+*If you also use Rancher desktop pay attention to the following things:* +
 Rancher Desktop using "dockerd(moby)" and not "containerd" under the Kubernetes Setting - Container Runtime. Also note that there may be difficulties trying to start the cluster if you are connected to a VPN. After Rancher Desktop has started the cluster add your microservices as you like. 
 
-**Important is to add them directly into the namespace: Application.** 
-
-Create Namespace(*directly with istio enabled*): 
-```KUBERNETES
----
-kubectl label namespace application istio-injection=enabled
-``` 
 *Code explanation:* _Creates namespace(Application) with Istio enabled on namespace_
 
 
 Add microservice retroactively to our application namespace:
 ```KUBERNETES
----
- kubectl apply -f MICROSERVICE.yaml -n application 
+$ kubectl apply -f MICROSERVICE.yaml -n application 
 ```
 *Code explanation:* _Add microservice to our created namespace(Application)_
 
@@ -417,20 +442,17 @@ Now our cluster should already have our microservices running under the applicat
 
 *Apply Prometheus:*
 ```KUBERNETES
----
-kubectl apply -f prometheus.yaml
+$ kubectl apply -f prometheus.yaml
 ```
 
 *Apply Grafana:*
 ```KUBERNETES
----
-kubectl apply -f grafana.yaml
+$ kubectl apply -f grafana.yaml
 ```
 
 *Apply Kiali:*
 ```KUBERNETES
----
-kubectl apply -f kiali.yaml
+$ kubectl apply -f kiali.yaml
 ```
 *Code explanation:* _Applies our new config files to the cluster_
 
