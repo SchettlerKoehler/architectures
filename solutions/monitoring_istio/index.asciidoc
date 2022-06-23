@@ -141,7 +141,11 @@ image::monitoring-architecture-implementation.png[Monitoring Implementation, wid
 
 The namespace with the *Monitoring* will be a bit more complex, because we have to adjust the config files of Prometheus and Grafana. We have oriented ourselves as it can be seen in this https://istiobyexample.dev/prometheus/[example] +
 
+Write a `configuration.yaml` for each tool mentioned in the following.
+
 ==== Grafana
+
+- `grafana.yaml`
  
 Part 1
 
@@ -244,6 +248,8 @@ metadata:
 See xref:Files/grafana.yaml[Grafana] for full example + 
 
 ==== Prometheus
+
+- `prometheus.yaml`
 
 Part 1
 
@@ -405,6 +411,8 @@ metadata:
 See xref:Files/prometheus/deployment.yml[Prometheus] for full example
 
 ==== Kiali
+- `kiali.yaml`
+- follow Istio's https://istio.io/latest/docs/ops/integrations/kiali/#installation[Kiali documentation] for the installation
 
 - You need to tell Kiali where to listen for Prometheus: The url consists of service.namespace:PORT
 ```YAML
