@@ -1,20 +1,18 @@
 //Category=Communication;Kubernetes;Microservice Platforms;Monitoring;
-//Product=Istio;Grafana;
-//Maturity level=Initial
-
-// Variables
+//Product=Istio;Grafana;Prometheus;Kiali;
+//Maturity level=Advanced
 
 :toc:
 
 = Istio Microservice Monitoring
 
-== Why do I need Istio for my monitoring?
-
-These two articles should give you an idea why you need monitoring and why you would want to configure it with Istio.
+== Why do I need Istio for monitoring?
 
 To get an understanding of what Istio is and why you should use it regardless of your intend to implement monitoring we recommend you to read their https://istio.io/latest/about/service-mesh/[introduction] about service mesh.
 
 For most of your monitoring questions you might want to read the https://istio.io/latest/docs/concepts/observability/["Observability"] section from the official Istio https://istio.io/latest/docs/[documentation]. 
+
+These two articles should give you an idea why you need monitoring and why you would want to configure it with Istio.
 
 == Why should you use Istio?
 
@@ -23,11 +21,7 @@ Istio makes traffic management transparent to the application, moving this funct
 //Abstract
 == Core elements of the problem and its solution
 
-//Communication:  
-//Now, we want to maintain the communication between the individual microservices uniformly by default.
-
-Our solution is tailored for when Istio is running on the existing cluster and monitoring of the various microservices is attempted.
-We are in an environment of Docker, Kubernetes, microservices and Istio. The idea here is that a cluster consists of microservices and runs with Docker over Kubernetes.  In addition, we would like to find a way how we can monitor our cluster with the individual microservices and accordingly make some analyses via Prometheus or Grafana. Now we present a solution following for how we have implemented this scenario. Our final project was a cluster with three different namespaces: Istio, Application and Monitoring. On the Istio namespace the normal Istio system is running and the solution was tested with the default demo https://istio.io/latest/docs/setup/additional-setup/config-profiles/[profile]. The application namespace runs all microservices and the monitoring namespace is where we want to do the monitoring.
+Our solution is tailored for when Istio is running on the existing cluster and monitoring of the various microservices is attempted. In our environment we use Docker, Kubernetes, microservices and Istio. The idea here is that a cluster consists of microservices and runs with Docker over Kubernetes. In addition, we would like to find a way to monitor our cluster with the individual microservices and make some analyses via Prometheus or Grafana accordingly. Now we present a solution in the following, how we have implemented this scenario. Our final project is a cluster with three different Kubernetes namespaces: Istio, Application and Monitoring. The Istio system is running on its own namespace by default and the solution was tested with the default demo https://istio.io/latest/docs/setup/additional-setup/config-profiles/[profile]. The application namespace contains your microservices and the monitoring namespace covers your monitoring implementation.
 
 We used the following tools to solve the problem:
 
@@ -40,9 +34,7 @@ We used the following tools to solve the problem:
 
 == Introduction
 
-Assumed is a Kubernetes cluster with Istio installed and running microservices. We will continuously show how you can monitor your cluster with the microservices using Prometheus and Grafana and how you can split the tasks into different namespaces.
-
-// This image fits best here because we cover details later
+Assumed is a Kubernetes cluster with Istio installed and running microservices. We will show you how to monitor your cluster and its microservices using Prometheus and Grafana. You will learn how to split the tasks logically in different namespaces. 
 
 image::monitoring-namespaces.png[Namespaces Namespaces, width=100%, height=100%]
 
@@ -73,28 +65,23 @@ In detail we want the following:
 * run standard microservices in the application namespace
 * intercept the metrics created by Istio and process them by our monitoring namespace
 
-// This image fits here because as a reader your should have and Idea now what istio and kubernetes is -> Monitoring will be covered later
-// TODO add description to arrows
-
 image::monitoring-architecture-simple.png[Namespaces Architecture Simple, width=100%, height=100%]
 [.small]#Description: Istio as a tool in focus#
 
 === What is possible in the future?
-Since this solution is tailored towards an existing application you may have gateways (like Kubernetes Virtual Service) configured that expose your application to outside traffic already. With Istio you can define traffic routes and destination rules inside your cluster. Monitoring with Istio will help you to analyze the performance of your cluster regardless of your gateway cofiguration. Just note that configuring an ingress-gateway will enable other benefits that are likely going to influence the monitoring of your application.
+Since this solution is tailored towards an existing application you may have gateways (like Kubernetes Virtual Service) configured that expose your application to outside traffic already. With Istio you can define traffic routes and destination rules inside your cluster. Monitoring with Istio will help you to analyze the performance of your cluster regardless of your gateway cofiguration. Just note that configuring an ingress-gateway will enable other benefits that are going to influence the monitoring of your application.
 
 === Why monitoring in its own namespace?
 For a detailed overview: read the https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/[explanation] of namespaces.
 
 == Context and Scope
 *We would like to walk you through our decision making, why we think that you should use Prometheus and Grafana for your monitoring.* + 
-We use https://grafana.com/[Prometheus] to intercept the metrics created by Istio. This data is then passed on to https://grafana.com/[Grafana] to visualize the data e.g. with graphs. On top Prometheus provides a powerful querying language. Grafana and Prometheus are both compatible with most data source types. Additionally we recommend you to add https://istio.io/latest/docs/ops/integrations/kiali/[Kiali] to your architecture. +
-*Further we would like to explain why we also recommend to use Istio.* Istio is in charge of connect, secure, control, and observe services, but in our solution we only focus on the "connect" feature. How would you document your architecture? Writing a documentaion can be a very difficult and confusing task, as microservices and tools show up left and right in a diverse fashion. And how is anyone going to understand your documentaion? Istio basically allows you to reduce the complexity of your architecture, because all you have to say is, it is managed by Istio.
+We use https://grafana.com/[Prometheus] to intercept the metrics created by Istio. This data is then passed to https://grafana.com/[Grafana] to visualize the data e.g. with graphs. On top Prometheus provides a powerful querying language. Grafana and Prometheus are both compatible with most data source types. Additionally we recommend you to add https://istio.io/latest/docs/ops/integrations/kiali/[Kiali] to your architecture. +
+*Further we would like to explain why we also recommend to use Istio.* Istio is in charge of connecting, securing, controlling, and observing the microservices in your cluster, but in our solution we only focus on the "connecting" feature. How would you document your architecture? Writing a documentaion can be a very difficult and confusing task, as microservices and tools show up left and right in a diverse fashion. And how is anyone going to understand your documentaion? Istio basically allows you to reduce the complexity of your architecture, because all you have to say is, it is managed by Istio.
 
-
-// TODO - rework solution strategy so that it visualizes final solution
 == Solution Strategy
-Prometheus is used to intercept and store metrics. In contrast, Grafana is used to visualize the metrics. Kiali displays the structure and state of our Istio cluster. It should be noted that kiali requires Prometheus to create topology structures, calculate health and more. +
-The setup of the namespace *istio-system* is indirectly already done, because Istio is already installed on our system and therefore the namespace is created automatically. The next namespace where we don't have to care much is the *Application* namespace, there we only have to add all our microservices which run in our cluster. +
+Prometheus is used to intercept and store metrics. In contrast, Grafana is used to visualize the metrics. Kiali displays the structure and state of your Istio cluster. It should be noted that Kiali requires Prometheus to create topological structures, calculate health and more. +
+The setup of the namespace *istio-system* is indirectly already done, because Istio is already installed on our system and therefore the namespace is created automatically. The next namespace where we don't have to care too much about is the *Application* namespace, there we only have to add all our microservices which run in our cluster. +
 We use Istio's https://istio.io/latest/docs/setup/additional-setup/sidecar-injection/[Sidecar Injection] to enable Istio's features in our namespaces. In particular we want to enable automatic sidecar injection as described in Istio's documentation. We don't recommend using manual sidecar injection unless you know what you are doing.
 
 image::monitoring-architecture.png[Monitoring Architecture, width=100%, height=100%]
@@ -105,7 +92,7 @@ image::monitoring-architecture.png[Monitoring Architecture, width=100%, height=1
 
 === Create Namespaces [[creating_namespaces]]
 
-Create your namespaces with `istio-injection=enabled` to ensure automatic sidecar injection is on.
+Create your namespaces with `istio-injection=enabled` to ensure automatic sidecar injection is on. This will enable Istio in your namespace.
 
 * Application
 ```Kubernetes
@@ -116,7 +103,6 @@ Create your namespaces with `istio-injection=enabled` to ensure automatic sideca
 ```Kubernetes
   kubectl label namespace monitoring istio-injection=enabled
 ```
-*Code explanation:* _Create namespaces application/monitoring and enable Istio on namespace_
 
 === Expose your jobs and microservices
 
@@ -135,9 +121,8 @@ We are defining targets for each of our microservices and jobs, which are scrape
         action: keep
         regex: istio-telemetry;prometheus
 ```
-*Code explanation:* _Defining targets for our job_
-// This image adds yaml code to the image before
-// TODO add description to arrows
+*Code explanation:* _Defining targets for our jobs_
+
 
 image::monitoring-architecture-implementation.png[Monitoring Implementation, width=100%, height=100%] 
 [.small]#Description: Visualization of code implementation inside your architecture#
@@ -145,9 +130,11 @@ image::monitoring-architecture-implementation.png[Monitoring Implementation, wid
 === Deploy Prometheus and Grafana
 
 The namespace with the *Monitoring* will be a bit more complex, because we have to adjust the config files of Prometheus and Grafana. We have oriented ourselves as it can be seen in this https://istiobyexample.dev/prometheus/[example] +
- *(1) Grafana Monitoring Namespace* - Part 1
+ *(1) Grafana Monitoring Namespace* 
+ 
+Part 1
 
-Register Grafana as a Service Account to allow it to autheticate while contacting the api server.
+- Register Grafana as a ServiceAccount to allow it to authenticate while contacting the api server
 ```YAML
   ---
 # Source: grafana/templates/serviceaccount.yaml
@@ -165,6 +152,7 @@ metadata:
 ```
 Part 2
 
+- Expose Grafana as a network service to give each of its pods an IP adress within your cluster
 ```YAML
 ---
 # Source: grafana/templates/service.yaml
@@ -180,7 +168,6 @@ metadata:
     app.kubernetes.io/version: "8.3.1"
     app.kubernetes.io/managed-by: Helm
 spec:
-  #
   type: ClusterIP
   ports:
     - name: service
@@ -201,13 +188,15 @@ metadata:
 ``` 
 Part 3
 
+- Configure Grafana according to your needs by using Kubernetes ConfigMaps
+
 ```YAML
 ---
 
 apiVersion: v1
 data:
-  istio-performance-dashboard.json: | [....]
-  pilot-dashboard.json: | [....]
+  istio-performance-dashboard.json: | [...]
+  pilot-dashboard.json: | [...]
 
 kind: ConfigMap
 metadata:
@@ -220,15 +209,17 @@ metadata:
 
 Part 4
 
+- replace `[...]` with your configurations
+
 ```YAML
 ---
 
 apiVersion: v1
 data:
-  istio-extension-dashboard.json: | [....]
-  istio-mesh-dashboard.json: | [....]
-  istio-workload-dashboard.json: [....]
-  istio-service-dashboard.json: [....]
+  istio-extension-dashboard.json: | [...]
+  istio-mesh-dashboard.json: | [...]
+  istio-workload-dashboard.json: [...]
+  istio-service-dashboard.json: [...]
 
 kind: ConfigMap
 metadata:
@@ -238,14 +229,17 @@ metadata:
 
 ---
 ``` 
-*Code explanation:* _Change config from Grafana to tell in which namespace(monitoring) it should running in_
 
 See xref:Files/grafana.yaml[Grafana] for full example + 
  
   
 
-*(2) Prometheus Monitoring Namespace* - Part 1
- 
+*(2) Prometheus Monitoring Namespace*
+
+Part 1
+
+- Register Prometheus as a ServiceAccount to allow it to authenticate while contacting the api server
+
 ```YAML
  ---
 # Source: prometheus/templates/server/serviceaccount.yaml
@@ -263,6 +257,12 @@ metadata:
   annotations:
     {}
 ---
+```
+
+- Configure Prometheus according to your needs by using Kubernetes ConfigMaps
+- You will also define the targets for your jobs here [[defining_targets]]
+
+```YAML
 # Source: prometheus/templates/server/cm.yaml
 apiVersion: v1
 kind: ConfigMap
@@ -275,6 +275,26 @@ metadata:
     heritage: Helm
   name: prometheus
   namespace: monitoring
+data:
+  alerting_rules.yml: |
+    {}
+  alerts: |
+    {}
+  prometheus.yml: | [...]
+    # ...
+    - job_name: 'job'
+      kubernetes_sd_configs:
+      - role: endpoints
+        namespaces:
+          names:
+          - application
+
+      relabel_configs:
+      - source_labels: [__meta_kubernetes_service_name, __meta_kubernetes_endpoint_port_name]
+        action: keep
+        regex: istio-telemetry;prometheus
+    # ...
+
 ```
 Part 2
 
